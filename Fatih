@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM-B | Sistem Informasi Manajemen Bimasakti</title>
+    <style>
+        :root {
+            --green-dark: #1A643A;
+            --green-light: #E8F5E9;
+            --beige: #F3EFE6;
+            --bg-main: #F4F6F9;
+            --text-dark: #2C3E50;
+            --text-muted: #7F8C8D;
+            --yellow: #F1C40F;
+            --red: #E74C3C;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- LOGIN PAGE --- */
+        #login-page { position: fixed; inset: 0; background: var(--beige); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: var(--shadow); width: 400px; text-align: center; border-top: 6px solid var(--green-dark); }
+        .login-logo { font-size: 32px; font-weight: 900; color: var(--green-dark); margin-bottom: 30px; letter-spacing: 1px; }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        .form-control { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        .form-control:focus { border-color: var(--green-dark); }
+        .role-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-role { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; background: var(--green-dark); color: white; }
+        .btn-role:hover { opacity: 0.9; transform: translateY(-2px); }
+        .error-msg { color: var(--red); font-size: 13px; margin-bottom: 15px; font-weight: bold; display: none; }
+
+        /* --- APP LAYOUT --- */
+        #app-layout { display: none; width: 100%; height: 100%; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px 0; z-index: 10; }
+        .sb-brand { font-size: 24px; font-weight: 900; color: var(--green-dark); text-align: center; margin-bottom: 40px; }
+        .sb-menu { list-style: none; flex: 1; }
+        .sb-item { padding: 15px 25px; color: var(--text-muted); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 12px; border-left: 4px solid transparent; transition: 0.2s; }
+        .sb-item:hover, .sb-item.active { background: var(--green-light); color: var(--green-dark); border-left-color: var(--green-dark); }
+        .sb-profile { padding: 20px; border-top: 1px solid #ddd; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .sb-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--green-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* MAIN AREA */
+        .main-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); overflow-y: auto; }
+        .topbar { background: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; }
+        .page-title { font-size: 22px; font-weight: bold; }
+        .content-wrap { padding: 30px; }
+
+        /* CARDS & WIDGETS */
+        .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .widget { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow); border-left: 4px solid var(--green-dark); }
+        .w-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+        .w-value { font-size: 32px; font-weight: 900; color: var(--text-dark); }
+
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: bold; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }
+        tr:hover { background: #fdfdfd; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .bg-success { background: #d4edda; color: #155724; }
+        .bg-warning { background: #fff3cd; color: #856404; }
+        .bg-danger { background: #f8d7da; color: #721c24; }
+
+        /* BUTTONS */
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-primary { background: var(--green-dark); color: white; }
+        .btn-primary:hover { background: #124829; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--green-dark); color: var(--green-dark); }
+
+        /* POPUP MODAL */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-title { margin-bottom: 20px; font-size: 20px; color: var(--green-dark); border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .locked { background: #e9ecef !important; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- ================= LOGIN PAGE ================= -->
+    <div id="login-page">
+        <div class="login-card">
+            <div class="login-logo">BIMASAKTI</div>
+            <div class="error-msg" id="login-error">⚠️ Akses Ditolak! Pilih Role yang Sesuai.</div>
+            <div class="form-group">
+                <label>ID Pengguna</label>
+                <input type="text" id="login-id" class="form-control" placeholder="Masukkan ID (admin/akuntan/owner)">
+            </div>
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--text-muted); text-align: left;">Masuk Sebagai:</div>
+            <div class="role-btns">
+                <button class="btn-role" onclick="doLogin('admin')">Admin</button>
+                <button class="btn-role" onclick="doLogin('akuntan')">Akuntan</button>
+                <button class="btn-role" style="background:#F39C12;" onclick="doLogin('owner')">Owner</button>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #999;">Gunakan ID: "admin", "akuntan", atau "owner"</div>
+        </div>
+    </div>
+
+    <!-- ================= APP LAYOUT ================= -->
+    <div id="app-layout">
+        <!-- SIDEBAR DINAMIS -->
+        <nav class="sidebar">
+            <div class="sb-brand">BIMASAKTI</div>
+            <ul class="sb-menu" id="sidebar-menu">
+                <!-- Menu di-render via JavaScript berdasarkan Role -->
+            </ul>
+            <div class="sb-profile" onclick="logout()">
+                <div class="sb-avatar" id="user-avatar">A</div>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;" id="user-name">Nama User</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Keluar Sistem 🚪</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN AREA -->
+        <div class="main-area">
+            <header class="topbar">
+                <div class="page-title" id="page-title">Dashboard</div>
+                <div style="font-weight: bold; color: var(--green-dark);" id="role-badge">Tipe Role</div>
+            </header>
+            
+            <div class="content-wrap" id="main-content">
+                <!-- Konten halaman dirender di sini -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL CATAT PEMBAYARAN (AKUNTAN) ================= -->
+    <div class="modal" id="modal-spp">
+        <div class="modal-content">
+            <div class="modal-title">🧾 Validasi Pembayaran SPP</div>
+            
+            <div class="form-group">
+                <label>Cari ID Plotting / ID Siswa</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="spp-id" class="form-control" placeholder="Contoh: PLT-001 / BIM-26-001">
+                    <button class="btn btn-primary" onclick="tarikDataSpp()">Tarik Data</button>
+                </div>
+                <div id="spp-warning" style="color:var(--red); font-size:12px; margin-top:5px; display:none;">Data tidak ditemukan!</div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nama Siswa (Auto)</label>
+                    <input type="text" id="spp-nama" class="form-control locked">
+                </div>
+                <div class="form-group">
+                    <label>Program (Auto)</label>
+                    <input type="text" id="spp-program" class="form-control locked">
+                </div>
+                <div class="form-group">
+                    <label>Bulan Tagihan</label>
+                    <select id="spp-bulan" class="form-control">
+                        <option value="Mei 2026">Mei 2026</option>
+                        <option value="Juni 2026">Juni 2026</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nominal Terkunci (Auto)</label>
+                    <input type="text" id="spp-nominal" class="form-control locked" style="font-weight:bold; color:var(--green-dark);">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Metode Pembayaran</label>
+                <select id="spp-metode" class="form-control">
+                    <option value="">-- Pilih Metode --</option>
+                    <option value="Transfer BCA">Transfer BCA</option>
+                    <option value="QRIS">QRIS</option>
+                    <option value="Tunai">Tunai / Cash</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn btn-outline" style="flex:1;" onclick="tutupModalSpp()">Batal</button>
+                <button class="btn btn-primary" style="flex:2;" onclick="simpanTransaksiSpp()">💾 Simpan & Cetak Kuitansi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LOGIK SCRIPT ================= -->
+    <script>
+        // --- 1. LOCAL DATABASE (STATE) ---
+        let AppState = {
+            currentUser: null,
+            siswa: [
+                { id: "BIM-26-001", nama: "Hakim Fadhlan", kelas: "4 SD", status: "Aktif" },
+                { id: "BIM-26-002", nama: "Salma Dewi", kelas: "6 SD", status: "Aktif" }
+            ],
+            plotting: [
+                { idPlot: "PLT-001", idSiswa: "BIM-26-001", program: "Reguler", tarif: 160000 },
+                { idPlot: "PLT-002", idSiswa: "BIM-26-002", program: "B. Inggris", tarif: 80000 }
+            ],
+            transaksi: [
+                { idTrx: "SPP-0001", idPlot: "PLT-001", tgl: "01 Mei 2026", nominal: 160000, metode: "QRIS", status: "Lunas" }
+            ]
+        };
+
+        // --- 2. AUTHENTICATION & SEGREGATION OF DUTIES ---
+        function doLogin(roleRequest) {
+            const inputId = document.getElementById('login-id').value.toLowerCase().trim();
+            const err = document.getElementById('login-error');
+            
+            // Validasi Sederhana
+            if(inputId !== roleRequest) {
+                err.style.display = 'block';
+                return;
+            }
+
+            // Set State & UI
+            AppState.currentUser = { role: roleRequest, name: roleRequest.toUpperCase() };
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('app-layout').style.display = 'flex';
+            
+            document.getElementById('user-name').innerText = roleRequest.toUpperCase();
+            document.getElementById('user-avatar').innerText = roleRequest.charAt(0).toUpperCase();
+            document.getElementById('role-badge').innerText = `Otoritas: ${roleRequest.toUpperCase()}`;
+
+            renderSidebar();
+        }
+
+        function logout() {
+            AppState.currentUser = null;
+            document.getElementById('app-layout').style.display = 'none';
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('login-id').value = '';
+        }
+
+        // --- 3. DYNAMIC ROUTING & SIDEBAR ---
+        function renderSidebar() {
+            const menuEl = document.getElementById('sidebar-menu');
+            const role = AppState.currentUser.role;
+            let menuHTML = '';
+
+            // SEGREGATION OF DUTIES LOGIC
+            if(role === 'admin') {
+                menuHTML = `
+                    <li class="sb-item active" onclick="loadPage('master')">🗄️ Master Siswa</li>
+                    <li class="sb-item" onclick="loadPage('plotting')">📅 Plotting & Jadwal</li>
+                    <li class="sb-item" onclick="loadPage('smart')">⚡ Smart Input</li>
+                `;
+                loadPage('master');
+            } else if(role === 'akuntan') {
+                menuHTML = `
+                    <li class="sb-item active" onclick="loadPage('keuangan')">💰 Database SPP</li>
+                `;
+                loadPage('keuangan');
+            } else if(role === 'owner') {
+                menuHTML = `
+                    <li class="sb-item active" onclick="loadPage('laporan')">📊 Laporan Eksekutif</li>
+                `;
+                loadPage('laporan');
+            }
+            menuEl.innerHTML = menuHTML;
+        }
+
+        // --- 4. PAGE RENDERER ---
+        function loadPage(page) {
+            // Update Active Menu UI
+            document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
+            event && event.currentTarget ? event.currentTarget.classList.add('active') : null;
+
+            const content = document.getElementById('main-content');
+            const title = document.getElementById('page-title');
+
+            if(page === 'master') {
+                title.innerText = "Master Data Siswa";
+                content.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Daftar Siswa Aktif</h3>
+                            <button class="btn btn-primary">+ Siswa Baru</button>
+                        </div>
+                        <table>
+                            <tr><th>ID Siswa</th><th>Nama Lengkap</th><th>Tingkat</th><th>Status</th></tr>
+                            ${AppState.siswa.map(s => `<tr><td><b>${s.id}</b></td><td>${s.nama}</td><td>${s.kelas}</td><td><span class="badge bg-success">${s.status}</span></td></tr>`).join('')}
+                        </table>
+                    </div>
+                `;
+            } 
+            
+            else if(page === 'keuangan') {
+                title.innerText = "Buku Besar & Tagihan SPP";
+                
+                // Kalkulasi Real-time Dashboard Akuntan
+                let totalMasuk = AppState.transaksi.reduce((sum, t) => sum + t.nominal, 0);
+                
+                content.innerHTML = `
+                    <div class="widget-grid">
+                        <div class="widget"><div class="w-title">Total Kas Masuk</div><div class="w-value">Rp ${(totalMasuk/1000)} rb</div></div>
+                        <div class="widget"><div class="w-title">Transaksi Berhasil</div><div class="w-value">${AppState.transaksi.length}</div></div>
+                        <div class="widget" style="border-left-color: var(--yellow);"><div class="w-title">Piutang Menunggak</div><div class="w-value" style="color:var(--yellow);">2</div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Riwayat Transaksi (Ledger)</h3>
+                            <button class="btn btn-primary" onclick="bukaModalSpp()">+ Catat Pembayaran</button>
+                        </div>
+                        <table>
+                            <tr><th>ID Transaksi</th><th>ID Plotting</th><th>Tgl Bayar</th><th>Nominal</th><th>Metode</th><th>Status Audit</th></tr>
+                            ${AppState.transaksi.map(t => `<tr>
+                                <td><b>${t.idTrx}</b></td><td>${t.idPlot}</td><td>${t.tgl}</td>
+                                <td>Rp ${t.nominal.toLocaleString('id-ID')}</td><td>${t.metode}</td>
+                                <td><span class="badge bg-success">${t.status}</span></td>
+                            </tr>`).join('')}
+                        </table>
+                    </div>
+                `;
+            }
+
+            else if(page === 'laporan') {
+                title.innerText = "Laporan Eksekutif";
+                let totalPemasukan = AppState.transaksi.reduce((sum, t) => sum + t.nominal, 0);
+                content.innerHTML = `
+                    <div class="widget-grid">
+                        <div class="widget"><div class="w-title">Siswa Aktif</div><div class="w-value text-success">${AppState.siswa.length} 📈</div></div>
+                        <div class="widget"><div class="w-title">Total Pemasukan Murni</div><div class="w-value text-primary">Rp ${(totalPemasukan/1000)}K</div></div>
+                    </div>
+                    <div class="card"><div class="card-header"><h3>Grafik Pemasukan (Simulasi)</h3></div>
+                    <div style="height:200px; background:#f8f9fa; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999; font-style:italic;">[ Area Visualisasi Grafik Eksekutif ]</div></div>
+                `;
+            }
+
+            else {
+                title.innerText = "Under Construction";
+                content.innerHTML = `<div class="card">Fitur ${page} sedang dalam pengembangan.</div>`;
+            }
+        }
+
+        // --- 5. LOGIKA TRANSAKSI AKUNTAN (VALIDASI GANDA) ---
+        let selectedPlotting = null;
+
+        function bukaModalSpp() {
+            document.getElementById('modal-spp').style.display = 'flex';
+            document.getElementById('spp-id').value = '';
+            document.getElementById('spp-nama').value = '';
+            document.getElementById('spp-program').value = '';
+            document.getElementById('spp-nominal').value = '';
+            document.getElementById('spp-metode').value = '';
+            document.getElementById('spp-warning').style.display = 'none';
+            selectedPlotting = null;
+        }
+
+        function tutupModalSpp() {
+            document.getElementById('modal-spp').style.display = 'none';
+        }
+
+        function tarikDataSpp() {
+            const inputId = document.getElementById('spp-id').value.trim().toUpperCase();
+            
+            // Cari data di Plotting (Simulasi Validasi Database)
+            selectedPlotting = AppState.plotting.find(p => p.idPlot === inputId || p.idSiswa === inputId);
+            
+            if(selectedPlotting) {
+                document.getElementById('spp-warning').style.display = 'none';
+                const siswaData = AppState.siswa.find(s => s.id === selectedPlotting.idSiswa);
+                
+                // Kunci Data di Form
+                document.getElementById('spp-nama').value = siswaData.nama;
+                document.getElementById('spp-program').value = selectedPlotting.program;
+                document.getElementById('spp-nominal').value = `Rp ${selectedPlotting.tarif.toLocaleString('id-ID')}`;
+            } else {
+                document.getElementById('spp-warning').style.display = 'block';
+                document.getElementById('spp-nama').value = '';
+                document.getElementById('spp-program').value = '';
+                document.getElementById('spp-nominal').value = '';
+            }
+        }
+
+        function simpanTransaksiSpp() {
+            if(!selectedPlotting) return alert("Tarik data yang valid terlebih dahulu!");
+            
+            const metode = document.getElementById('spp-metode').value;
+            if(!metode) return alert("Pilih metode pembayaran!");
+
+            // Buat ID Transaksi Baru
+            const newTrxId = `SPP-000${AppState.transaksi.length + 1}`;
+            
+            // Simpan ke Array State
+            AppState.transaksi.unshift({
+                idTrx: newTrxId,
+                idPlot: selectedPlotting.idPlot,
+                tgl: "26 Mei 2026", // Simulasi Tgl Hari Ini
+                nominal: selectedPlotting.tarif,
+                metode: metode,
+                status: "Lunas"
+            });
+
+            tutupModalSpp();
+            alert(`✅ Transaksi ${newTrxId} Berhasil Dicatat!`);
+            
+            // REFRESH DASHBOARD SECARA OTOMATIS
+            loadPage('keuangan');
+        }
+    </script>
+</body>
+</html>
